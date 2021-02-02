@@ -1,0 +1,53 @@
+version: '3'
+services:
+
+  mysql:
+    container_name: database
+    restart: always
+    image: mysql:5.6
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_DATABASE: database_name
+      MYSQL_USER: database_user
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+        - "3306:3306"
+
+  nginx:
+    container_name: nginx
+    image: "nginx"
+    restart: always
+    build: ./nginx
+    volumes:
+      - ./src:/src
+      - ./logs:/var/log/nginx
+    ports:
+      - 80:80
+    depends_on:
+      - php-fpm
+
+
+  php-fpm:
+    container_name: php-fpm
+    image: "php-fpm"
+    build: ./php/7.1/fpm
+    volumes:
+      - ./src:/src
+      - ./logs:/var/log/php
+    ports:
+      - 9000:9000
+    depends_on:
+      - php-cli
+      - mysql
+    working_dir: /src
+
+
+  php-cli:
+    container_name: php-cli
+    image: "php-cli"
+    build: ./php/7.1/cli
+
+
